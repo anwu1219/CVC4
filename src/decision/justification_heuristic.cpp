@@ -560,20 +560,14 @@ JustificationHeuristic::handleAndOrEasy(TNode node, SatValue desiredVal)
 
   int numChildren = node.getNumChildren();
   SatValue desiredValInverted = invertValue(desiredVal);
-  for(int i = 0; i < numChildren; i += 2) {
-    std::vector<Node> nodes;
-    for (int j = i; j < numChildren && j < i + 2; j++){
-      TNode curNode = getChildByWeight(node, j, desiredVal);
-      SatValue s = tryGetSatValue(curNode);
-      if (s == desiredVal && checkJustified(curNode)){
-        setJustified(node);
-        return NO_SPLITTER;
-      }
-      if (s != desiredValInverted ){
-        nodes.push_back(curNode);
-      }
+  for(int i = 0; i < numChildren; ++i) {
+    TNode curNode = getChildByWeight(node, i, desiredVal);
+    SatValue s = tryGetSatValue(curNode);
+    if (s == desiredVal && checkJustified(curNode)){
+      setJustified(node);
+      return NO_SPLITTER;
     }
-    for (const auto& curNode : nodes){
+    if ( s != desiredValInverted ) {
       SearchResult ret = findSplitterRec(curNode, desiredVal);
       if(ret != DONT_KNOW) {
         return ret;
