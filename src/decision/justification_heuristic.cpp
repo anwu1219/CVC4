@@ -28,7 +28,7 @@
 
 namespace CVC4 {
 
-JustificationHeuristic::JustificationHeuristic(CVC4::DecisionEngine *de,
+JustificationHeuristic::JustificationHeuristic(CVC4::DecisionEngine* de,
                                                context::UserContext *uc,
                                                context::Context *c)
     : ITEDecisionStrategy(de, c),
