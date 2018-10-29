@@ -48,6 +48,7 @@ JustificationHeuristic::JustificationHeuristic(CVC4::DecisionEngine* de,
   d_curThreshold(0),
   d_childCache(uc),
   d_weightCache(uc),
+  d_checkInPairs(options::HandleAndOrEasyCheckInPairs()),
   d_startIndexCache(c) {
   smtStatisticsRegistry()->registerStat(&d_helfulness);
   smtStatisticsRegistry()->registerStat(&d_giveup);
@@ -560,20 +561,55 @@ JustificationHeuristic::handleAndOrEasy(TNode node, SatValue desiredVal)
 
   int numChildren = node.getNumChildren();
   SatValue desiredValInverted = invertValue(desiredVal);
-  for(int i = 0; i < numChildren; ++i) {
-    TNode curNode = getChildByWeight(node, i, desiredVal);
-    SatValue s = tryGetSatValue(curNode);
-    if (s == desiredVal && checkJustified(curNode)){
-      setJustified(node);
-      return NO_SPLITTER;
-    }
-    if ( s != desiredValInverted ) {
-      SearchResult ret = findSplitterRec(curNode, desiredVal);
-      if(ret != DONT_KNOW) {
-        return ret;
+  if (d_checkInPairs)
+    {
+      std::vector<TNode> nodes;
+      for (int i = 0; i < numChildren; i += 2)
+    {
+      nodes.clear();
+      for (int j = i; j < numChildren && j < i + 2; j++)
+      {
+        // check whether the next two children can justify the parent
+        TNode curNode = getChildByWeight(node, j, desiredVal);
+        SatValue s = tryGetSatValue(curNode);
+        if (s == desiredVal && checkJustified(curNode))
+        {
+          // If a child is justified and is the same value as the parent
+          setJustified(node);
+          return NO_SPLITTER;
+        }
+        if (s != desiredValInverted)
+        {
+          // If the child is not the negation of parent, try to justify it
+          nodes.push_back(curNode);
+        }
+      }
+      for (const auto &curNode : nodes)
+      {
+        SearchResult ret = findSplitterRec(curNode, desiredVal);
+        if (ret != DONT_KNOW)
+        {
+          return ret;
+        }
       }
     }
   }
+  else
+  {
+    for (int i = 0; i < numChildren; ++i)
+    {
+      TNode curNode = getChildByWeight(node, i, desiredVal);
+      if (tryGetSatValue(curNode) != desiredValInverted)
+      {
+        SearchResult ret = findSplitterRec(curNode, desiredVal);
+        if (ret != DONT_KNOW)
+        {
+          return ret;
+        }
+      }
+    }
+  }
+
   Assert(d_curThreshold != 0, "handleAndOrEasy: No controlling input found");
   return DONT_KNOW;
 }

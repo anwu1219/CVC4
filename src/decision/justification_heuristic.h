@@ -61,6 +61,8 @@ class JustificationHeuristic : public ITEDecisionStrategy {
   IntStat d_giveup;
   TimerStat d_timestat;
 
+  bool d_checkInPairs;
+
   /**
    * A copy of the assertions that need to be justified
    * directly. Doesn't have ones introduced during during ITE-removal.
